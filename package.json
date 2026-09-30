@@ -1,0 +1,12 @@
+{
+  "name": "ratio-quest",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/serve.js",
+    "build": "node scripts/build.js",
+    "test": "node --test scripts/state.test.js",
+    "check": "node --check app.js && node --check state.js && node --check bank.js && npm test && npm run build"
+  }
+}

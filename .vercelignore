@@ -1,0 +1,6 @@
+.git/
+.impeccable/
+.playwright-cli/
+output/
+questions.js
+scripts/acceptance-browser.js
