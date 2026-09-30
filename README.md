@@ -2,6 +2,10 @@
 
 A no-login Grade 7 ratios and proportions adventure, made for Alina and her class. Students run a community bake sale to buy books for the school library. Every decision moves the fundraiser story forward.
 
+Play: https://ratio-quest-book-bake.vercel.app
+
+See `ACCEPTANCE.md` for the completed local and live verification pass.
+
 ## Run locally
 
 Node.js 20 or later. No app dependencies or API keys.

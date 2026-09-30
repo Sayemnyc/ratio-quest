@@ -36,6 +36,7 @@ async (page) => {
   assert(await page.locator('.nudge p').textContent()===bank[0].hint,'Wrong answer hint must match');
   assert(await page.locator('.options button').count()===4,'Wrong answer permits retry');
   await overflow('Phone wrong answer and hints');
+  for(const width of [320,375,390]) { await page.setViewportSize({width,height:844});await overflow(`Question ${width}`); }
   await page.screenshot({path:'output/playwright/question-phone.png',fullPage:true});
   await page.reload();
   assert(await page.locator('.nudge').count()===1,'Retry state persists');
@@ -46,6 +47,8 @@ async (page) => {
       if(await page.locator('#decision').count()) await page.locator('#decision').click();
       assert(await page.locator('.story').textContent()===q.story,`Story ${q.id}`);
       assert(await page.locator('.question').textContent()===q.question,`Question ${q.id}`);
+      if(!(await page.locator('.hint-note').count())) await page.locator('#hint').click();
+      assert(await page.locator('.hint-note p').textContent()===q.hint,`Hint ${q.id}`);
       const options=await page.locator('.options button').allTextContents();
       assert(JSON.stringify(options)===JSON.stringify(q.options.map((o,j)=>'ABCD'[j]+o)),`Options ${q.id}`);
       if(misses.includes(i) && !(await page.locator('.nudge').count())) await page.locator(`[data-option="${q.options.findIndex(o=>o!==q.answer)}"]`).click();
@@ -110,5 +113,5 @@ async (page) => {
   assert(failedRequests.length===0,`Failed assets: ${failedRequests.join('; ')}`);
   assert(await page.locator('img').evaluateAll(imgs=>imgs.every(i=>i.complete&&i.naturalWidth>0)),'Broken images');
   report.push('No console errors or failed assets; phone 320–390 px and Chromebook 1366 px layouts verified');
-  console.log(JSON.stringify({pass:true,report,errors,failedRequests},null,2));
+  return {pass:true,report,errors,failedRequests};
 }
