@@ -1,1 +1,7 @@
+node_modules/
+dist/
+.vercel/
+.playwright-cli/
+output/
+:memory:.*
 .vercel

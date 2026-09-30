@@ -1,21 +1,20 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ratio Quest</title>
-<meta name="description" content="A story-driven 7th grade ratios and proportions game.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🍋%3C/text%3E%3C/svg%3E">
-<link rel="stylesheet" href="style.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#173e3b">
+  <meta name="description" content="Save the school library, one delicious decision at a time. A free Grade 7 ratios and proportions adventure.">
+  <title>Ratio Quest · The Great Book Bake</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="app.js"></script>
 </head>
 <body>
-<header class="top">
-  <a class="brand" href="#/">🍋 Ratio Quest</a>
-  <div id="hud"></div>
-  <nav><a href="#/teacher">Teacher view</a></nav>
-</header>
-<main id="app"></main>
-<script src="questions.js"></script>
-<script src="app.js"></script>
+  <header class="nav"><a href="#home" class="brand"><span class="brand-icon">R<span>Q</span></span>Ratio Quest<span class="edition">THE GREAT BOOK BAKE</span></a><nav aria-label="Main navigation"><a href="#home">Quest map</a><a href="#teacher">Teacher view</a></nav></header>
+  <section id="audio-panel" class="audio-panel" aria-label="Audio controls"></section>
+  <main id="app"></main>
+  <footer>Made for Alina & her crew. <span>Big ideas. A little math. A lot of books.</span></footer>
+  <div id="toast" role="status" aria-live="polite"></div>
 </body>
 </html>

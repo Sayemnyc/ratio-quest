@@ -1,0 +1,13 @@
+{
+  "name": "ratio-quest",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/serve.js",
+    "build": "node scripts/build.js",
+    "narration:prepare": "node scripts/prepare-narration.js",
+    "test": "node --test scripts/state.test.js scripts/audio.test.js",
+    "check": "node --check app.js && node --check audio.js && node --check narration.js && node --check story.js && node --check state.js && node --check bank.js && npm test && npm run build"
+  }
+}
