@@ -4,3 +4,4 @@
 output/
 questions.js
 scripts/acceptance-browser.js
+scripts/audio-browser.js

@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "node scripts/serve.js",
     "build": "node scripts/build.js",
-    "test": "node --test scripts/state.test.js",
-    "check": "node --check app.js && node --check state.js && node --check bank.js && npm test && npm run build"
+    "test": "node --test scripts/state.test.js scripts/audio.test.js",
+    "check": "node --check app.js && node --check audio.js && node --check state.js && node --check bank.js && npm test && npm run build"
   }
 }

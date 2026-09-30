@@ -1,4 +1,4 @@
 import { mkdir, copyFile } from 'node:fs/promises';
 await mkdir('dist', { recursive: true });
-for (const file of ['index.html', 'style.css', 'app.js', 'bank.js', 'state.js', 'icon.svg']) await copyFile(file, `dist/${file}`);
+for (const file of ['index.html', 'style.css', 'app.js', 'audio.js', 'bank.js', 'state.js', 'icon.svg']) await copyFile(file, `dist/${file}`);
 console.log('Static app built in dist/');

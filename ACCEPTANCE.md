@@ -27,3 +27,18 @@ Vercel production deployment `dpl_AWPH1DwUD2BLNhHx6cTf8ZxD7hRb` confirmed **Read
 - One verified hint is supplied per question. Both hint uses show that original hint, without adding or changing math content.
 - Technical acceptance is complete. Alina's enjoyment and learning still need a real student play session.
 - The requested repository already held a separate implementation. This version is on `codex/ratio-quest-book-bake`; the existing main branch and deployment are preserved.
+
+## Audio update
+
+The user subsequently requested voice-over, sounds and music, superseding the original no-sound requirement. Published at the same URL, deployment `dpl_etcMAwuzsuRHeHTwqzxNPwDnwJG9`.
+
+- Actual browser speech start events verified with the local English `Samantha` voice. Stories, question options, hints, wrong-choice consequences and success narration were checked.
+- Native Web Audio oscillators verified for original music and gentle game effects. Music gain lowers during narration and recovers when narration ends or is stopped.
+- No autoplay on initial load or reload. Explicit Enable audio or Read this screen tap starts playback.
+- Voice, music and effects toggle independently. Stop reading preserves the music; Mute all suspends audio and stops scheduled notes.
+- Volume and toggles persist independently of student records. Teacher view cancels speech and suspends sound; returning to the game resumes enabled music.
+- Audio controls meet 44-pixel touch heights and have no horizontal overflow at 320, 390 and 1366 pixels. Phone screenshot reviewed.
+- Full original quest acceptance pass rerun successfully after integration. All 24 exact questions, hints, tier rules, badges and teacher records still pass.
+- `npm run check`: eight automated tests, syntax checks and static build pass. Live audio browser check: `pass: true`, `errors: []`.
+
+Device voices differ. Physical phones/Chromebooks and audible quality on those speakers still need a student play session. No paid narration service, microphone access, downloaded music or new app dependencies are used.

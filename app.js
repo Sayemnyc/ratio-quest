@@ -1,4 +1,5 @@
 import { BANK } from './bank.js';
+import { QuestAudio } from './audio.js';
 import { KEY, newPlayer, loadStore, accuracy, bestScore, unlocked, startTier, answerQuestion, advance, useHint } from './state.js';
 
 const app = document.querySelector('#app');
@@ -39,6 +40,21 @@ const scenes = [
 ];
 const esc = value => String(value).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 const player = () => store.players.find(p => p.id === store.active);
+function screenNarration() {
+  if (location.hash === '#teacher') return '';
+  const celebration = app.querySelector('.badge-moment');
+  if (celebration) return `${celebration.querySelector('h1').textContent}. ${[...celebration.querySelectorAll(':scope > p')].slice(1, 3).map(p => p.textContent).join(' ')}`;
+  const card = app.querySelector('.quest-card');
+  if (!card) return `Welcome to Ratio Quest. The Great Book Bake. ${app.querySelector('.intro')?.textContent || ''} Choose Start quest when you’re ready.`;
+  const success = card.querySelector('.success');
+  if (success) return `Nice move, crew! ${success.querySelector('h2').textContent}. ${success.querySelector('p').textContent}`;
+  const nudge = card.querySelector('.nudge');
+  if (nudge) return `Plot twist! ${app.querySelector('.crew-note').textContent} ${nudge.querySelector('p').textContent} Try another move.`;
+  const question = card.querySelector('.question');
+  if (question) return `${question.textContent} Your choices are. ${[...card.querySelectorAll('.option')].map(b => `${b.firstElementChild.textContent}. ${b.lastChild.textContent}`).join('. ')}.`;
+  return `${app.querySelector('.scene h2').textContent}. ${card.querySelector('.story').textContent}`;
+}
+const audio = new QuestAudio(document.querySelector('#audio-panel'), screenNarration);
 function save() {
   try { localStorage.setItem(KEY, JSON.stringify(store)); storageWorks = true; }
   catch { storageWorks = false; }
@@ -82,6 +98,10 @@ function render() {
   else if(/^tier-[123]$/.test(route)) quest(Number(route.at(-1)));
   else home();
   app.querySelector('h1')?.setAttribute('tabindex','-1');
+  const tier = /^tier-[123]$/.test(route) ? Number(route.at(-1)) : null;
+  const run = tier ? player().tiers[tier - 1]?.run : null;
+  const key = JSON.stringify([store.active, route, run?.index, run?.phase, run?.feedback?.option, run?.feedback?.correct]);
+  audio.screenChanged(key, route === 'teacher');
 }
 function notify(message) {
   const toast=document.querySelector('#toast');
@@ -110,7 +130,7 @@ app.addEventListener('click',e=>{
   if(!button || button.disabled) return;
   if(button.dataset.start) {
     const tier=Number(button.dataset.start);
-    if(startTier(player(),tier)) { save(); location.hash=`tier-${tier}`; render(); window.scrollTo(0,0); }
+    if(startTier(player(),tier)) { audio.effect('click'); save(); location.hash=`tier-${tier}`; render(); window.scrollTo(0,0); }
     return;
   }
   if(button.dataset.play) { store.active=button.dataset.play; save(); location.hash='home'; return; }
@@ -118,14 +138,16 @@ app.addEventListener('click',e=>{
   if(!/^tier-[123]$/.test(route)) return;
   const tier=Number(route.at(-1)), run=player().tiers[tier-1]?.run;
   if(!run) return;
-  if(button.id==='decision') run.phase='question';
+  if(button.id==='decision') { audio.effect('click'); run.phase='question'; }
   if(button.dataset.option!==undefined) {
     const q=BANK[(tier-1)*8+run.index], result=answerQuestion(player(),tier,q.options[Number(button.dataset.option)]);
     if(result?.correct) notify(result.xp?'+10 XP · Smart move!':'Smart move! Best score in progress.');
+    if(result) audio.effect(result.correct ? 'success' : 'retry');
   }
-  if(button.id==='hint') useHint(run);
-  if(button.id==='next') { advance(player(),tier); window.scrollTo(0,0); }
+  if(button.id==='hint' && useHint(run)) audio.effect('hint');
+  if(button.id==='next') { audio.effect(run.index === 7 ? 'badge' : 'click'); advance(player(),tier); window.scrollTo(0,0); }
   save(); render();
+  if(button.id==='hint') audio.speak(BANK[(tier-1)*8+run.index].hint);
   if(button.dataset.option!==undefined) app.querySelector('.success, .nudge')?.scrollIntoView({block:'nearest',behavior:'smooth'});
 });
 window.addEventListener('hashchange',()=>{render();window.scrollTo(0,0);app.querySelector('h1')?.focus({preventScroll:true});});
