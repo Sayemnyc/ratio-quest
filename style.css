@@ -72,3 +72,27 @@ th{color:var(--purple)}
 .pill{display:inline-block;background:#eee9ff;border-radius:99px;padding:2px 10px;font-weight:700}
 .x{background:none;border:0;font:inherit;color:#8a8aa8;cursor:pointer;min-height:44px;min-width:44px}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.stage{max-width:720px;margin:0 auto}
+.scene{position:relative;text-align:center;border-radius:28px;padding:16px 12px 22px;background:linear-gradient(#9fd8ff,#e9f7ff 70%,#ffe7a3 70%);box-shadow:0 6px 0 #0000001a;margin-bottom:12px;overflow:hidden}
+.scene .tag{position:absolute;left:12px;top:12px}
+.props{font-size:clamp(3.2rem,16vw,5.5rem);padding-top:26px;letter-spacing:.1em;position:relative;min-height:1.3em}
+.streak{position:absolute;right:12px;top:12px;background:var(--orange);color:#fff;font-weight:900;border-radius:99px;padding:4px 14px}
+.pigeon{position:absolute;top:0;left:-20%;font-size:2.6rem;animation:fly 1s linear forwards}
+@keyframes fly{to{left:110%;top:30%}}
+.shake{animation:shk .45s}
+@keyframes shk{20%{transform:translateX(-8px) rotate(-.6deg)}60%{transform:translateX(8px) rotate(.6deg)}}
+.lib{background:#fff;border-radius:18px;padding:8px 14px;margin-bottom:12px;font-weight:800;font-size:.95rem}
+.slots{display:grid;grid-template-columns:repeat(24,1fr);gap:3px;margin-top:6px}
+.slots i{height:20px;border-radius:3px;background:#e6e1f7}
+.slots i.b{background:var(--green)}
+.slots i.new{animation:pp .6s ease-out}
+@keyframes pp{0%{transform:translateY(-30px) scale(1.8);opacity:0}100%{transform:none;opacity:1}}
+.chat{display:flex;gap:10px;align-items:flex-start;margin:10px 0}
+.av{flex:none;width:52px;height:52px;border-radius:50%;background:#fff;display:grid;place-items:center;font-size:2rem;box-shadow:0 3px 0 #0000001a}
+.bubble{background:#fff;border-radius:6px 22px 22px 22px;padding:14px 18px;font-size:1.2rem;line-height:1.45;box-shadow:0 4px 0 #0000001a;animation:in .35s ease-out}
+.chat.good .bubble{background:#d5f5e6}
+@keyframes in{from{transform:translateY(10px);opacity:0}}
+.ask{background:#6c3fd1;color:#fff;border-radius:24px;padding:16px;margin:14px 0 8px}
+.ask .qtext{margin:0 0 12px;font-size:1.4rem}
+.conf{position:fixed;z-index:9;font-size:2rem;pointer-events:none;animation:cf 1.3s ease-out forwards}
+@keyframes cf{to{transform:translate(var(--dx),var(--dy)) rotate(360deg);opacity:0}}
