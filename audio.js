@@ -1,4 +1,6 @@
-// Browser narration and original synthesized music. Audio begins only after a tap.
+import { NARRATION_AUDIO } from './assets/narration/manifest.js';
+
+// Recorded narration and original synthesized music. Audio begins only after a tap.
 const SETTINGS_KEY = 'ratio-quest-audio-v1';
 const DEFAULTS = { voice: true, music: true, sounds: true, volume: 60 };
 
@@ -17,10 +19,10 @@ export function loadAudioSettings(raw) {
 // Speak mathematical punctuation explicitly while keeping the visible bank untouched.
 export function spokenMath(text) {
   return text
+    .replace(/\b(\d+(?:\.\d+)?|x)\/(\d+(?:\.\d+)?)\b/g, '$1 divided by $2')
     .replace(/\$(\d+(?:\.\d+)?)/g, '$1 dollars')
     .replace(/(\d+(?:\.\d+)?)%/g, '$1 percent')
     .replace(/(\d+)\s*:\s*(\d+)/g, '$1 to $2')
-    .replace(/\b([\dx]+)\/(\d+)\b/g, '$1 divided by $2')
     .replace(/=/g, ' equals ')
     .replace(/\(0,0\)/g, '(zero, zero)');
 }
@@ -34,8 +36,9 @@ export class QuestAudio {
     this.enabled = false;
     this.teacher = false;
     this.nodes = new Set();
-    this.synth = window.speechSynthesis;
-    this.canSpeak = Boolean(this.synth && window.SpeechSynthesisUtterance);
+    this.voicePlayer = new Audio();
+    this.voicePlayer.preload = 'none';
+    this.canSpeak = true;
     this.canPlay = Boolean(window.AudioContext || window.webkitAudioContext);
     this.message = 'Tap Enable audio to hear the adventure.';
     this.narrationId = 0;
@@ -47,8 +50,7 @@ export class QuestAudio {
       this.persist();
       this.updateGains();
       panel.querySelector('output').textContent = `${this.settings.volume}%`;
-      // A new utterance will use the new level; stopping now prevents a loud tail.
-      this.stopVoice();
+      this.voicePlayer.volume = this.settings.volume / 100;
     });
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) {
@@ -61,21 +63,11 @@ export class QuestAudio {
       }
     });
     window.addEventListener('pagehide', () => this.mute());
-    this.synth?.addEventListener('voiceschanged', () => this.chooseVoice());
-    this.chooseVoice();
     this.renderControls();
   }
 
   persist() {
     try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(this.settings)); } catch { /* Session controls still work. */ }
-  }
-
-  chooseVoice() {
-    if (!this.canSpeak) return;
-    const voices = this.synth.getVoices();
-    this.voice = voices.find(v => v.localService && /^en[-_]US$/i.test(v.lang))
-      || voices.find(v => /^en[-_]US$/i.test(v.lang))
-      || voices.find(v => /^en/i.test(v.lang));
   }
 
   renderControls() {
@@ -131,7 +123,7 @@ export class QuestAudio {
     if (button.id === 'audio-enable') {
       if (this.enabled) this.mute();
       else {
-        // Call speech inside the gesture too, for browsers with stricter autoplay policies.
+        // Start narration inside the tap, including browsers with stricter autoplay policies.
         const activation = this.activate();
         if (!this.teacher) this.speak(this.readScreen());
         await activation;
@@ -166,37 +158,41 @@ export class QuestAudio {
 
   stopVoice() {
     this.narrationId++;
-    this.synth?.cancel();
+    this.voicePlayer.pause();
+    this.voicePlayer.onended = null;
+    this.voicePlayer.onerror = null;
+    this.voicePlayer.removeAttribute('src');
+    this.voicePlayer.load();
     this.speaking = false;
     this.updateGains();
   }
 
-  speak(text) {
+  speak(entry) {
     this.stopVoice();
-    if (!this.enabled || !this.settings.voice || !this.canSpeak || this.teacher || document.hidden || !text || this.settings.volume === 0) return;
+    if (!this.enabled || !this.settings.voice || this.teacher || document.hidden || !entry || this.settings.volume === 0) return;
     const id = this.narrationId;
-    this.chooseVoice();
-    const utterance = new SpeechSynthesisUtterance(spokenMath(text));
-    if (this.voice) utterance.voice = this.voice;
-    utterance.lang = 'en-US';
-    utterance.rate = 0.94;
-    utterance.pitch = 1.04;
-    utterance.volume = this.settings.volume / 100;
-    this.utterance = utterance; // Retain until complete for browser speech engines.
+    const clip = NARRATION_AUDIO[entry.id];
+    if (!clip || clip.text !== entry.text) {
+      this.setMessage('This recording isn’t available. You can keep playing with the text.');
+      return;
+    }
+    this.voicePlayer.src = new URL(clip.src, document.baseURI).href;
+    this.voicePlayer.volume = this.settings.volume / 100;
     this.speaking = true;
     this.updateGains();
-    utterance.onend = () => {
+    this.voicePlayer.onended = () => {
       if (id !== this.narrationId) return;
       this.speaking = false;
       this.updateGains();
     };
-    utterance.onerror = event => {
+    const failed = () => {
       if (id !== this.narrationId) return;
       this.speaking = false;
       this.updateGains();
-      if (!['canceled', 'interrupted'].includes(event.error)) this.setMessage('This browser couldn’t read aloud. Try Read this screen, or keep playing with the text.');
+      this.setMessage('The recording couldn’t play. Tap Read this screen to retry, or keep playing with the text.');
     };
-    this.synth.speak(utterance);
+    this.voicePlayer.onerror = failed;
+    this.voicePlayer.play().catch(failed);
   }
 
   screenChanged(key, teacher = false) {

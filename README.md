@@ -20,7 +20,7 @@ Open http://127.0.0.1:4173. Stop the server with Ctrl+C.
 npm run check
 ```
 
-This checks JavaScript syntax, automated contract/state/audio tests, and the static build. `npm run build` copies the seven public app files to `dist/`. Deploy that directory on a static host; `vercel.json` supplies the Vercel settings.
+This checks JavaScript syntax, automated contract/state/audio tests, and the static build. `npm run build` copies the nine public app files and the recorded MP3 assets to `dist/`. Deploy that directory on a static host; `vercel.json` supplies the Vercel settings.
 
 ## Rules
 
@@ -42,9 +42,9 @@ The roster is local to the browser/device. Teachers cannot see results from othe
 
 Tap **Enable audio** to hear narration, gentle action sounds and an original looping tune. Nothing plays automatically when the site loads or reloads. Voice, music and sounds have independent toggles; use the volume slider or **Mute all** at any time. Preferences save separately from student progress.
 
-Narration reads stories, questions and options, hints, story consequences and badge celebrations. **Read this screen** repeats the current narration, while **Stop reading** ends the voice without muting music. Spoken ratios use “to,” percentages use “percent,” and dollar amounts use “dollars”; the on-screen question bank is untouched.
+Recorded storyteller narration reads stories, questions and options, hints, story consequences and badge celebrations. **Read this screen** repeats the current narration, while **Stop reading** ends the voice without muting music. Spoken ratios use “to,” percentages use “percent,” and dollar amounts use “dollars”; the on-screen question bank is untouched.
 
-The browser provides the English narration voice, preferring a local US English voice. Voice quality and availability vary by device and browser; some browser voices may use that browser's speech service. The app has no speech API key, microphone access or recording. If narration is unavailable, an inline notice appears and students can continue using the text.
+Narration uses 126 pre-generated MP3 clips with one consistent American English storyteller voice (`Kokoro af_heart`). It no longer uses browser speech synthesis. Question text, option order, answers and hints remain unchanged. Clips are generated locally, normalized to consistent loudness, and served as ordinary static files. No speech provider, credit balance, microphone or recording access is needed during play. If a clip cannot load, the game displays a retry notice and remains playable with text.
 
 Music and effects use Web Audio synthesis: no downloaded tracks, paid services or runtime dependencies. Music softens during narration. Switching to Teacher view silences all audio; hiding the tab stops narration and pauses music. Returning to a visible game tab resumes enabled music, but does not restart narration automatically.
 
@@ -53,7 +53,10 @@ Music and effects use Web Audio synthesis: no downloaded tracks, paid services o
 - `bank.js`: all 24 supplied questions, unchanged.
 - `state.js`: scoring, tier gating, rewards, hint counts, save validation.
 - `app.js`: map, story scenes, choices, badge celebrations, teacher roster.
-- `audio.js`: narration, original music, sound effects, audio controls and saved preferences.
+- `audio.js`: recorded narration playback, original music, sound effects, audio controls and saved preferences.
+- `story.js` and `narration.js`: shared story content and stable scripts for all 126 clips.
+- `assets/narration/`: MP3 recordings and their checked manifest.
+- `scripts/record-narration.py`: offline asset generation; not required to run or deploy the game.
 - `style.css`: responsive Chromebook and phone layouts, reduced-motion support.
 - `scripts/question-contract.txt`: exact pasted question lines, used as an independent contract fixture.
 - `scripts/state.test.js`: contract and state acceptance tests.
@@ -64,3 +67,9 @@ The public GitHub repository already contained a previous version when this impl
 ## Next classroom check
 
 Let Alina play one tier and ask which decision felt like running the sale. Browser acceptance proves the specified behavior; her feedback is the test for engagement. A future opt-in classroom export/import could bring results from separate Chromebooks to a teacher's browser without adding accounts.
+
+## Regenerate narration (optional)
+
+The checked-in MP3s work without installing a speech model. To change scripts, `npm run narration:prepare` creates the recording requests under ignored `output/audio/`. Then use the local generator with Python 3.12, `kokoro-onnx==0.6.1`, `soundfile`, and the Kokoro v1.0 int8 model and voice data. `scripts/record-narration.py` writes the clips and manifest; `npm run check` catches missing or stale scripts. Model files and the Python environment stay in `output/` and are not deployed.
+
+Sources: [Kokoro model and voices](https://huggingface.co/hexgrad/Kokoro-82M), [Kokoro ONNX](https://github.com/thewh1teagle/kokoro-onnx). The model is Apache 2.0; the inference library is MIT. The browser runs neither model nor Python.

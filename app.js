@@ -1,59 +1,29 @@
 import { BANK } from './bank.js';
 import { QuestAudio } from './audio.js';
+import { chapters, scenes, FRAME } from './story.js';
+import { narrationFor } from './narration.js';
 import { KEY, newPlayer, loadStore, accuracy, bestScore, unlocked, startTier, answerQuestion, advance, useHint } from './state.js';
 
 const app = document.querySelector('#app');
 let storageWorks = true;
 let store;
 try { store = loadStore(localStorage.getItem(KEY)); } catch { store = loadStore(null); storageWorks = false; }
-const chapters = [
-  { name: 'Set up the sale', place: 'Lemonade Landing', color: 'mint', icon: '🍋', badge: 'Ratio Rookie', desc: 'Mix it. Make it. Get the crew ready.', action: 'Get the stand ready' },
-  { name: 'Bring on the crowd', place: 'Bakery Borough', color: 'peach', icon: '🍪', badge: 'Proportion Pro', desc: 'Scale up recipes. Make every dollar count.', action: 'Open the bake sale' },
-  { name: 'Save the library', place: 'Library Lookout', color: 'lavender', icon: '📚', badge: 'Master of Ratios', desc: 'Go big. Hit the goal. Fill those shelves.', action: 'Bring the books home' }
-];
-// Each choice acts on a bake-sale scene. Extra narrative never changes the supplied bank.
-const scenes = [
-  ['🍋', 'Mix the lemonade', 'SYRUP → WATER', 'That pitcher is making some very dramatic lemonade. The crew puts it aside for a remix.', 'The lemonade is mixed! Your first customers are lining up.'],
-  ['🥤', 'Plan the next batch', 'MORNING → AFTERNOON', 'The planning board gets a little tangled. Your crew hands you a fresh marker.', 'The sales pattern is clear. Now the crew knows when to stock up.'],
-  ['🧑‍🍳', 'Assemble your crew', 'VOLUNTEERS → BAKERS', 'Someone is trying to carry three trays at once. Let’s rebalance the crew.', 'The crew is balanced. Every baker has the help they need.'],
-  ['🍎', 'Shop for pie supplies', 'APPLE BAG → BUDGET', 'The shopping budget does a tiny backflip. Check the price of just one pound.', 'Apples are in the basket. Your budget stays on track.'],
-  ['🎨', 'Mix the team colors', 'BLUE → WHITE', 'The banner turns a surprising shade. The paint crew saves a clean bucket for another mix.', 'The team color looks perfect. Hang that banner!'],
-  ['🎟️', 'Organize the ticket desk', 'ADULTS → KIDS', 'The ticket board is getting crowded. The crew needs the smallest version of the ratio.', 'The ticket desk is organized. The line can keep moving.'],
-  ['🤝', 'Make the volunteer plan', 'BOYS → GIRLS', 'The volunteer board is doing too much. Shrink both groups by the same factor.', 'The volunteer plan is ready. Everyone has a place on the crew.'],
-  ['🚐', 'Fuel the delivery van', 'MILES → GALLONS', 'The driver raises an eyebrow at the fuel plan. Time for a quick pit stop.', 'The fuel plan is ready. Supplies are on their way!'],
-  ['🍪', 'Set the cookie price', 'BOXES → DOLLARS', 'The price labels are confused. One cookie box needs one steady price.', 'Price tags are up. The cookie stand is open for business.'],
-  ['🏷️', 'Choose a pricing plan', 'PLAN A ↔ PLAN B', 'The price board has a surprise charge hiding on it. Look at an order with no boxes.', 'Your price board scales fairly with every box. Customers are ready.'],
-  ['🌾', 'Rescue the recipe card', 'FLOUR → BATCHES', 'The dough is looking a little mysterious. The crew brings a clean measuring cup.', 'Recipe rescued. Four batches are headed for the oven.'],
-  ['🍫', 'Bake for a bigger crowd', 'SUGAR → SERVINGS', 'These brownies are taking an unexpected turn. Let’s resize that recipe together.', 'Ten servings are ready. The brownie fans cheer!'],
-  ['🗺️', 'Navigate to the bakery', 'MAP → REAL ROAD', 'The driver almost takes a scenic detour. Check what each map centimeter stands for.', 'Route locked in. The van heads straight to the bakery.'],
-  ['📚', 'Reserve the library share', 'PROFIT → BOOK FUND', 'The book envelope needs another count. The crew keeps every dollar on the table.', 'The library share is safely in its envelope. More books are getting closer.'],
-  ['🛍️', 'Choose a flour deal', 'PRICE → ONE PACK', 'The bargain sign might be showing off. Compare the cost of just one pack.', 'Good deal secured. More of the budget can go toward books.'],
-  ['🎁', 'Grow the wrapping team', 'VOLUNTEERS → BOXES', 'Gift boxes are piling up in a wobbly tower. Check how much one volunteer can wrap.', 'The bigger crew wraps the gifts. The sale is picking up speed!'],
-  ['📐', 'Build the finale stage', 'BLUEPRINT → STAGE', 'The stage crew pauses with their tape measure. Let’s check the blueprint scale.', 'The stage fits the plan. The finale has a home.'],
-  ['🚚', 'Check the delivery charge', 'BASE FEE + MILES', 'The invoice has a little surprise. Peek at the cost before the van drives anywhere.', 'The delivery fee is understood. Your budget has no surprises.'],
-  ['🧁', 'Bake the big muffin batch', 'EGGS + MILK → MUFFINS', 'The muffin crew holds the mixing bowl. Both ingredients need to grow together.', 'The big batch is in the oven. Muffins for the whole crowd!'],
-  ['💰', 'Thank your star seller', 'SALES → COMMISSION', 'The seller gives the calculator a curious look. Let’s check her share together.', 'Your star seller gets her share. Teamwork pays off.'],
-  ['📦', 'Buy the supply crate', 'DISCOUNT → TAX', 'The checkout total looks surprising. The discount happens before the tax.', 'Crate purchased. You kept the discount and covered the tax.'],
-  ['🛣️', 'Send the last supply truck', 'SPEED → DISTANCE', 'The route planner takes a wrong turn. Check the distance traveled in one hour.', 'The last truck is on schedule. Finale supplies are rolling in.'],
-  ['🖌️', 'Paint the finale banner', 'CONCENTRATE + WATER', 'The paint is making a bold statement. Remember the bucket includes both ingredients.', 'The finale banner is ready. The library crowd gathers.'],
-  ['📚', 'Reach the book goal', 'SALES − COSTS → BOOKS', 'The library shelf is almost ready. Check the profit per box, then make sure the goal is covered.', 'You did it! The bake sale reaches the goal. New books are coming to the school library.']
-];
+
 const esc = value => String(value).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 const player = () => store.players.find(p => p.id === store.active);
 function screenNarration() {
-  if (location.hash === '#teacher') return '';
-  const celebration = app.querySelector('.badge-moment');
-  if (celebration) return `${celebration.querySelector('h1').textContent}. ${[...celebration.querySelectorAll(':scope > p')].slice(1, 3).map(p => p.textContent).join(' ')}`;
-  const card = app.querySelector('.quest-card');
-  if (!card) return `Welcome to Ratio Quest. The Great Book Bake. ${app.querySelector('.intro')?.textContent || ''} Choose Start quest when you’re ready.`;
-  const success = card.querySelector('.success');
-  if (success) return `Nice move, crew! ${success.querySelector('h2').textContent}. ${success.querySelector('p').textContent}`;
-  const nudge = card.querySelector('.nudge');
-  if (nudge) return `Plot twist! ${app.querySelector('.crew-note').textContent} ${nudge.querySelector('p').textContent} Try another move.`;
-  const question = card.querySelector('.question');
-  if (question) return `${question.textContent} Your choices are. ${[...card.querySelectorAll('.option')].map(b => `${b.firstElementChild.textContent}. ${b.lastChild.textContent}`).join('. ')}.`;
-  return `${app.querySelector('.scene h2').textContent}. ${card.querySelector('.story').textContent}`;
+  const route = location.hash.slice(1);
+  if (route === 'teacher') return null;
+  if (!/^tier-[123]$/.test(route)) return narrationFor('intro');
+  const tier = Number(route.at(-1));
+  const record = player().tiers[tier - 1], run = record?.run;
+  if (!run) return null;
+  if (run.index === 8) return narrationFor(tier === 3 ? 'badge-3' : `badge-${tier}-${bestScore(record) >= 80 ? 'open' : 'retry'}`);
+  const q = BANK[(tier - 1) * 8 + run.index];
+  const kind = run.phase === 'success' ? 'success' : run.feedback && !run.feedback.correct ? 'retry' : run.phase;
+  return narrationFor(`${q.id}-${kind}`);
 }
+
 const audio = new QuestAudio(document.querySelector('#audio-panel'), screenNarration);
 function save() {
   try { localStorage.setItem(KEY, JSON.stringify(store)); storageWorks = true; }
@@ -71,7 +41,7 @@ function islandArt(tier) {
 function home() {
   const p = player();
   const next = [1,2,3].find(t => unlocked(p,t) && bestScore(p.tiers[t-1]) < 80) ?? 3;
-  app.innerHTML = `${progressHeader()}<section class="hero"><div><p class="eyebrow">A GRADE 7 ADVENTURE · RATIOS & PROPORTIONS</p><h1>Small batches.<br>Big <span>book energy.</span></h1><p class="intro">You and your friends are running a community bake sale and fundraiser to buy new books for the school library. Every decision, from mixing lemonade to reading the map to the final money count, needs ratio math to get right.</p><button class="primary" data-start="${next}">${p.earned.length ? 'Continue quest' : 'Start quest'} <span>↗</span></button><p class="tiny">24 decisions. One library to save. Your pace.</p></div><div class="hero-art"><div class="sticker">THE GREAT<br><strong>BOOK BAKE</strong><span>✦</span></div><div class="book-stack"><i>THE ADVENTURE STARTS HERE</i><i>ONE SMART CHOICE AT A TIME</i><i>FOR ALINA & HER CREW</i></div><span class="floating lemon">🍋</span><span class="floating cookie">🍪</span><span class="spark spark1">✦</span><span class="spark spark2">✧</span></div></section><section class="map-section" aria-labelledby="map-title"><div class="section-heading"><div><p class="eyebrow">YOUR ADVENTURE</p><h2 id="map-title">Three stops. A whole lot of good.</h2></div><span class="pill">${p.tiers.filter(t => t?.completed).length} / 3 badges earned</span></div><div class="islands">${chapters.map((c,i) => {
+  app.innerHTML = `${progressHeader()}<section class="hero"><div><p class="eyebrow">A GRADE 7 ADVENTURE · RATIOS & PROPORTIONS</p><h1>Small batches.<br>Big <span>book energy.</span></h1><p class="intro">${FRAME}</p><button class="primary" data-start="${next}">${p.earned.length ? 'Continue quest' : 'Start quest'} <span>↗</span></button><p class="tiny">24 decisions. One library to save. Your pace.</p></div><div class="hero-art"><div class="sticker">THE GREAT<br><strong>BOOK BAKE</strong><span>✦</span></div><div class="book-stack"><i>THE ADVENTURE STARTS HERE</i><i>ONE SMART CHOICE AT A TIME</i><i>FOR ALINA & HER CREW</i></div><span class="floating lemon">🍋</span><span class="floating cookie">🍪</span><span class="spark spark1">✦</span><span class="spark spark2">✧</span></div></section><section class="map-section" aria-labelledby="map-title"><div class="section-heading"><div><p class="eyebrow">YOUR ADVENTURE</p><h2 id="map-title">Three stops. A whole lot of good.</h2></div><span class="pill">${p.tiers.filter(t => t?.completed).length} / 3 badges earned</span></div><div class="islands">${chapters.map((c,i) => {
     const tier = i+1, open = unlocked(p,tier), rec=p.tiers[i];
     return `<article class="island ${c.color} ${open?'':'locked'}"><div class="island-top"><span class="eyebrow">TIER 0${tier}</span><span class="pill">${!open?'Locked':rec?.completed?'Badge earned':'Ready to explore'}</span></div>${islandArt(tier)}<div class="island-content"><p class="place">${c.place}</p><h3>${c.name}</h3><p>${c.desc}</p><div class="chapter-progress">${rec?`${rec.run.index} / 8 quests · Best score ${bestScore(rec)}%`:'8 story quests · 80 XP'}</div><button class="${open?'dark':'lock-button'}" data-start="${tier}" ${open?'':'disabled'}>${open?(rec?.completed?'Replay tier ↗':rec?'Continue tier ↗':'Explore island ↗'):'🔒 Locked'}</button>${!open?'<p class="unlock-rule">Score 80%+ on the previous tier to unlock.</p>':''}</div></article>`;
   }).join('')}</div></section><section class="badge-shelf"><div><p class="eyebrow">YOUR TROPHY SHELF</p><h2>Good math. Great crew.</h2></div><div class="badges">${chapters.map((c,i)=>`<div class="badge ${p.tiers[i]?.completed?'earned':''}"><span>${p.tiers[i]?.completed?'✦':'◇'}</span><strong>${c.badge}</strong></div>`).join('')}</div></section><p class="save-note">Progress saves on this browser. Switch students above, or build a roster in Teacher view.</p>`;
@@ -147,7 +117,7 @@ app.addEventListener('click',e=>{
   if(button.id==='hint' && useHint(run)) audio.effect('hint');
   if(button.id==='next') { audio.effect(run.index === 7 ? 'badge' : 'click'); advance(player(),tier); window.scrollTo(0,0); }
   save(); render();
-  if(button.id==='hint') audio.speak(BANK[(tier-1)*8+run.index].hint);
+  if(button.id==='hint') audio.speak(narrationFor(`${BANK[(tier-1)*8+run.index].id}-hint`));
   if(button.dataset.option!==undefined) app.querySelector('.success, .nudge')?.scrollIntoView({block:'nearest',behavior:'smooth'});
 });
 window.addEventListener('hashchange',()=>{render();window.scrollTo(0,0);app.querySelector('h1')?.focus({preventScroll:true});});

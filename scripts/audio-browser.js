@@ -22,11 +22,14 @@ async (page) => {
         return context;
       }
     });
-    const speak = speechSynthesis.speak.bind(speechSynthesis);
-    speechSynthesis.speak = utterance => {
-      window.audioProbe.utterances.push(utterance.text);
-      utterance.addEventListener('start', () => window.audioProbe.starts.push(utterance.text));
-      return speak(utterance);
+    const play = HTMLMediaElement.prototype.play;
+    HTMLMediaElement.prototype.play = function (...args) {
+      if (this instanceof HTMLAudioElement) {
+        window.audioProbe.utterances.push(this.src);
+        this.addEventListener('playing', () => window.audioProbe.starts.push(this.src), { once: true });
+        window.audioProbe.player = this;
+      }
+      return play.apply(this, args);
     };
   });
   await page.evaluate(() => {
@@ -44,9 +47,9 @@ async (page) => {
   await page.waitForFunction(() => audioProbe.contexts[0]?.state === 'running' && audioProbe.oscillatorStarts > 0);
   await page.waitForFunction(() => audioProbe.starts.length > 0, { timeout: 15000 });
   await page.waitForFunction(() => audioProbe.gains[1].gain.value < 0.025);
-  assert(await page.evaluate(() => audioProbe.utterances[0].includes('Welcome to Ratio Quest')), 'Intro narration');
+  assert(await page.evaluate(() => audioProbe.utterances[0].endsWith('/intro.mp3')), 'Intro narration');
   await page.locator('#audio-stop').click();
-  await page.waitForFunction(() => !speechSynthesis.speaking);
+  await page.waitForFunction(() => audioProbe.player.paused);
   await page.waitForFunction(() => audioProbe.gains[1].gain.value > 0.06);
   assert(await page.evaluate(() => audioProbe.contexts[0].state === 'running'), 'Stop reading keeps music running');
   await page.locator('[data-audio="music"]').click();
@@ -55,15 +58,15 @@ async (page) => {
   assert(await page.evaluate(count => audioProbe.oscillatorStarts === count, musicCount), 'Music off stops scheduling');
   await page.getByRole('button', { name: 'Start quest' }).click();
   await page.locator('#decision').waitFor();
-  assert(await page.evaluate(() => audioProbe.utterances.at(-1).includes('1 cup of lemon syrup')), 'Story narration');
+  assert(await page.evaluate(() => audioProbe.utterances.at(-1).endsWith('/1.1-story.mp3')), 'Story narration');
   await page.locator('#decision').click();
-  assert(await page.evaluate(() => audioProbe.utterances.at(-1).includes('A. 1 to 4')), 'Questions and math options narrated');
+  assert(await page.evaluate(() => audioProbe.utterances.at(-1).endsWith('/1.1-question.mp3')), 'Questions and math options narrated');
   await page.locator('#hint').click();
-  assert(await page.evaluate(() => audioProbe.utterances.at(-1).startsWith('A ratio compares two amounts')), 'Exact hint narration');
+  assert(await page.evaluate(() => audioProbe.utterances.at(-1).endsWith('/1.1-hint.mp3')), 'Exact hint narration');
   await page.locator('[data-option="1"]').click();
-  assert(await page.evaluate(() => audioProbe.utterances.at(-1).includes('dramatic lemonade')), 'Wrong-choice consequence narration');
+  assert(await page.evaluate(() => audioProbe.utterances.at(-1).endsWith('/1.1-retry.mp3')), 'Wrong-choice consequence narration');
   await page.locator('[data-option="0"]').click();
-  assert(await page.evaluate(() => audioProbe.utterances.at(-1).includes('Nice move, crew! 1 to 4')), 'Success narration');
+  assert(await page.evaluate(() => audioProbe.utterances.at(-1).endsWith('/1.1-success.mp3')), 'Success narration');
   await page.locator('#next').click();
   await page.locator('[data-audio="voice"]').click();
   await page.locator('[data-audio="sounds"]').click();
@@ -86,18 +89,18 @@ async (page) => {
   await page.locator('#roster-form').waitFor();
   await page.waitForFunction(() => audioProbe.contexts[0]?.state === 'suspended');
   assert(await page.locator('#audio-read').isDisabled(), 'Teacher view disables read');
-  assert(await page.evaluate(() => !speechSynthesis.speaking), 'Teacher view cancels voice');
+  assert(await page.evaluate(() => audioProbe.player.paused), 'Teacher view cancels voice');
   await page.getByRole('link', { name: 'Quest map', exact: true }).click();
   await page.locator('.hero').waitFor();
   await page.waitForFunction(() => audioProbe.contexts[0]?.state === 'running');
   await page.locator('#audio-enable').click();
-  await page.waitForFunction(() => audioProbe.contexts[0]?.state === 'suspended' && !speechSynthesis.speaking);
+  await page.waitForFunction(() => audioProbe.contexts[0]?.state === 'suspended' && audioProbe.player.paused);
   const stopped = await page.evaluate(() => audioProbe.oscillatorStarts);
   await page.waitForTimeout(500);
   assert(await page.evaluate(before => audioProbe.oscillatorStarts === before, stopped), 'Mute all stops music');
   await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({ path: 'output/playwright/audio-phone.png', fullPage: true });
-  const voice = await page.evaluate(() => speechSynthesis.getVoices().find(v => v.localService && v.lang === 'en-US')?.name);
+  const voice = await page.evaluate(async () => (await import('./assets/narration/manifest.js')).NARRATOR);
   assert(errors.length === 0, `Console errors: ${errors.join('; ')}`);
-  return { pass: true, voice, verified: ['Actual native speech start events', 'Original music and effects start native oscillators', 'Music gain ducks during narration and recovers afterward', 'No autoplay, independent toggles, replay voice, volume, saved settings', 'Mute and quiet teacher view', 'Phone and desktop controls'], errors };
+  return { pass: true, voice, verified: ['Actual recorded audio playing events', 'Original music and effects start native oscillators', 'Music gain ducks during narration and recovers afterward', 'No autoplay, independent toggles, replay voice, volume, saved settings', 'Mute and quiet teacher view', 'Phone and desktop controls'], errors };
 }

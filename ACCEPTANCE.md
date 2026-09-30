@@ -42,3 +42,17 @@ The user subsequently requested voice-over, sounds and music, superseding the or
 - `npm run check`: eight automated tests, syntax checks and static build pass. Live audio browser check: `pass: true`, `errors: []`.
 
 Device voices differ. Physical phones/Chromebooks and audible quality on those speakers still need a student play session. No paid narration service, microphone access, downloaded music or new app dependencies are used.
+
+## Recorded storyteller update
+
+After feedback that the browser voice sounded robotic and monotonous, replaced browser speech synthesis with 126 locally generated Kokoro `af_heart` MP3s. Every device receives the same recordings. Published at the same URL, production deployment `dpl_EzTL7Yhb8coTxPSdGKLzcLwzpwmj` confirmed **Ready**.
+
+- All 126 recording scripts match the shared story/question/hint source; the exact 24-question bank remains unchanged. Build rejects incomplete or stale recordings.
+- `npm run check`: nine tests, JavaScript syntax checks and static asset build pass.
+- Native HTMLAudioElement playing events verified locally and on production. Stories, choices, hints, retry consequences and success use their corresponding recorded clips.
+- Live audio browser check reports `pass: true`, narrator `Heart · Storyteller`, and zero console errors. Music ducking, independent controls, saved preferences, no autoplay, mute, teacher silence and phone/desktop touch targets pass.
+- Full local quest acceptance rerun successfully: all 24 questions, tier rules, retries, badges, XP, roster, saves and layouts pass with zero errors or failed requests.
+- Production availability check confirms all 126 clips return HTTP 200 with `audio/mpeg` and nonempty content.
+- Recordings contain about 17 minutes of narration in about 12 MB. Each clip loads on demand; the model and Python environment are not shipped.
+
+The first story clip was provided for listening feedback. Browser tests verify playback and behavior; Sayem and Alina's listening feedback remains the acceptance check for perceived naturalness. Physical-device speaker quality is not established by viewport testing. No paid upgrade was purchased; playback needs no provider credits.
